@@ -30,10 +30,10 @@ process:
       num_rows_per_band: null                                 # number of rows in each band in LSH. Default it's None, and it will be determined by an optimal params computation algorithm
 
     #删除单条数据内部重复的句子
-  - remove_repeat_sentences_mapper:                         # remove repeat sentences in text samples.
-     lowercase: True                                        # whether to convert sample text to lower case
-     ignore_special_character: true                          # whether to ignore special characters when judging repeated sentences. Special characters are all characters except Chinese characters, letters and numbers
-     min_repeat_sentence_length: 2                           # sentences shorter than this length will not be deduplicated. If ignore_special_character is set to True, then special characters are not included in this length                       # remove characters specified by users
+#   - remove_repeat_sentences_mapper:                         # remove repeat sentences in text samples.
+#      lowercase: True                                        # whether to convert sample text to lower case
+#      ignore_special_character: true                          # whether to ignore special characters when judging repeated sentences. Special characters are all characters except Chinese characters, letters and numbers
+#      min_repeat_sentence_length: 2                           # sentences shorter than this length will not be deduplicated. If ignore_special_character is set to True, then special characters are not included in this length                       # remove characters specified by users
   
   #比 MinHash 更快但精度稍低
   - document_simhash_deduplicator:                          # deduplicate text samples using SimHash-LSH method

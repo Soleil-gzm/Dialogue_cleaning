@@ -36,10 +36,10 @@ PLOT_TURNS = list(range(23))
 BUCKET_CONFIG_MAP = {
     "bucket_0": "config_bucket_turn0.yaml",
     "bucket_1": "config_bucket_turn1.yaml",
-    "bucket_2": "config_bucket_turn2.yaml",
-    "bucket_3": "config_bucket_3.yaml",
-    "bucket_4": "config_bucket_4.yaml",
-    "bucket_5": "config_bucket_5.yaml",
+    "bucket_2": "overal_config.yaml",
+    "bucket_3": "overal_config.yaml",
+    "bucket_4": "overal_config.yaml",
+    "bucket_5": "overal_config.yaml",
     "bucket_6": "overal_config.yaml",
     "bucket_7": "overal_config.yaml",
     "bucket_8": "overal_config.yaml",
@@ -51,6 +51,25 @@ BUCKET_CONFIG_MAP = {
     "bucket_23plus": "config_bucket_23plus.yaml",
 
 }
+
+# BUCKET_CONFIG_MAP = {
+#     "bucket_0": "config_bucket_turn0.yaml",
+#     "bucket_1": "config_bucket_turn1.yaml",
+#     "bucket_2": "config_bucket_turn2.yaml",
+#     "bucket_3": "config_bucket_3.yaml",
+#     "bucket_4": "config_bucket_4.yaml",
+#     "bucket_5": "config_bucket_5.yaml",
+#     "bucket_6": "overal_config.yaml",
+#     "bucket_7": "overal_config.yaml",
+#     "bucket_8": "overal_config.yaml",
+#     "bucket_9": "overal_config.yaml",
+#     "bucket_10": "overal_config.yaml",
+#     "bucket_11": "overal_config.yaml",
+#     "bucket_12": "overal_config.yaml",
+#     "bucket_13_22": "config_bucket_13_22.yaml",
+#     "bucket_23plus": "config_bucket_23plus.yaml",
+
+# }
 
 
 # 返回当前时间的字符串格式，用于创建带时间戳的子目录，避免覆盖之前的结果。
@@ -88,7 +107,7 @@ def plot_turn_distribution(bucket_name, input_dist, output_dist, output_dir, sel
     轮次选择逻辑：
     若 selected_turns 不为 None，则按传入的列表排序后作为横坐标。
     否则，取输入分布和输出分布的键的并集。
-    中文字体设置：添加两行 rcParams，确保图表中的中文（如“轮次”、“样本数量”、“清洗前/后”）能正常显示。
+    中文字体设置：添加两行 rcParams，确保图表中的中文（如“轮次”、“样本数量”、“清洗前/后”）能正常显示。 
     """
     if not HAS_MATPLOTLIB:
         return
@@ -172,53 +191,6 @@ def clean_bucket(bucket_dir, config_file, output_dir, trace_dir, stats):
     output_dir.mkdir(parents=True, exist_ok=True)
     trace_dir.mkdir(parents=True, exist_ok=True)
 
-    # === 优化点：为整个桶生成单个配置文件，使用通配符 dataset_path ===
-    # 读取配置模板
-    with open(config_file, 'r', encoding='utf-8') as f:
-        config_content = f.read()
-
-    # 构建 dataset_path 为通配符，匹配桶内所有 .jsonl 文件
-    dataset_path = str(bucket_dir / "*.jsonl")
-    # export_path 直接设为输出目录
-    export_path = str(output_dir)
-    
-    # 替换占位符（如果配置文件中有 __INPUT_FILE__ / __OUTPUT_FILE__，则替换为通配符和目录）
-    # 原脚本中占位符是针对单个文件的，现在整个桶处理，需要替换为新的值
-    config_content = config_content.replace('__INPUT_FILE__', dataset_path)
-    config_content = config_content.replace('__OUTPUT_FILE__', export_path)
-
-    # 设置 work_dir 为桶级 trace 目录
-    if 'work_dir:' in config_content:
-        lines = config_content.splitlines()
-        new_lines = []
-        for line in lines:
-            if line.strip().startswith('work_dir:'):
-                new_lines.append(f"work_dir: {trace_dir}")
-            else:
-                new_lines.append(line)
-        config_content = '\n'.join(new_lines)
-    else:
-        config_content += f"\nwork_dir: {trace_dir}\n"
-
-    # 写入临时配置文件
-    temp_config = Path(f"temp_{bucket_dir.name}.yaml")
-    with open(temp_config, 'w', encoding='utf-8') as f:
-        f.write(config_content)
-
-    # 执行一次 dj-process
-    cmd = f"dj-process --config {temp_config}"
-    print(f"  执行清洗命令: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-    # 清理临时文件
-    if temp_config.exists():
-        temp_config.unlink()
-
-    if result.returncode != 0:
-        print(f"  ❌ 桶 {bucket_dir.name} 清洗失败，错误信息:\n{result.stderr[:500]}")
-        return 0
-    
-    # === 优化点：清洗完成后，遍历输入文件和输出文件，分别统计 ===
     # 用于累加该桶内所有文件的样本总数和 turn 分布。
     bucket_stats = {
         "input_samples": 0,
@@ -229,29 +201,74 @@ def clean_bucket(bucket_dir, config_file, output_dir, trace_dir, stats):
 
     success_count = 0       # 记录成功清洗的文件数量
     for input_file in input_files:
-        output_file = output_dir / input_file.name
-        if not output_file.exists():
-            print(f"    ⚠️ 输出文件不存在: {output_file.name}，可能清洗时被丢弃")
-            continue
-        success_count += 1
+        output_file = output_dir / input_file.name      # 清洗后的输出文件路径，保持原文件名
+        trace_subdir = trace_dir / input_file.stem      # 每个文件单独的 trace 子目录
 
-        # 统计输入样本数及 turn 分布
+        # 清洗前统计
         input_cnt = count_samples_in_jsonl(input_file)
         input_turn_dist = collect_turn_distribution(input_file)
 
-        # 统计输出
-        output_cnt = count_samples_in_jsonl(output_file)
-        output_turn_dist = collect_turn_distribution(output_file)
+        # 读取配置模板
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config_content = f.read()
 
-        print(f"    ✅ {input_file.name}: {input_cnt} → {output_cnt} 条")
+        # 替换占位符
+        config_content = config_content.replace('__INPUT_FILE__', str(input_file.absolute()))
+        config_content = config_content.replace('__OUTPUT_FILE__', str(output_file.absolute()))
 
-        # 累加桶统计
-        bucket_stats["input_samples"] += input_cnt
-        bucket_stats["output_samples"] += output_cnt
-        for turn, cnt in input_turn_dist.items():
-            bucket_stats["input_turn_dist"][turn] += cnt
-        for turn, cnt in output_turn_dist.items():
-            bucket_stats["output_turn_dist"][turn] += cnt
+        # 设置 work_dir
+        # Data-Juicer 需要 work_dir 参数来存放临时文件和日志。
+        # 如果配置文件中已存在 work_dir 行，则替换为 trace_subdir；否则在末尾添加一行。
+        if 'work_dir:' in config_content:
+            lines = config_content.splitlines()
+            new_lines = []
+            for line in lines:
+                if line.strip().startswith('work_dir:'):
+                    new_lines.append(f"work_dir: {trace_subdir}")
+                else:
+                    new_lines.append(line)
+            config_content = '\n'.join(new_lines)
+        else:
+            config_content += f"\nwork_dir: {trace_subdir}\n"
+
+        # 将修改后的配置内容写入临时 YAML 文件
+        temp_config = Path(f"temp_{input_file.stem}.yaml")
+        with open(temp_config, 'w', encoding='utf-8') as f:
+            f.write(config_content)
+
+        # 执行清洗
+        cmd = f"dj-process --config {temp_config}"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+        # 清理临时文件
+        if temp_config.exists():
+            temp_config.unlink()
+
+        if result.returncode == 0 and output_file.exists():
+            success_count += 1
+            output_cnt = count_samples_in_jsonl(output_file)
+            output_turn_dist = collect_turn_distribution(output_file)
+            print(f"    ✅ {input_file.name}: {input_cnt} → {output_cnt} 条")
+            # 累加桶统计
+            bucket_stats["input_samples"] += input_cnt
+            bucket_stats["output_samples"] += output_cnt
+            for turn, cnt in input_turn_dist.items():
+                bucket_stats["input_turn_dist"][turn] += cnt
+            for turn, cnt in output_turn_dist.items():
+                bucket_stats["output_turn_dist"][turn] += cnt
+        else:
+            print(f"    ❌ {input_file.name} 清洗失败")
+            if result.stderr:
+                print(f"        错误: {result.stderr[:200]}")
+
+    # 将桶统计存入 stats
+    # stats 是一个字典，由调用者（main 函数）传入，用于汇总所有桶的结果。这里将当前桶的统计存入 stats["buckets"][桶名]
+    # stats["buckets"][bucket_dir.name] = {
+    #     "input_samples": bucket_stats["input_samples"],
+    #     "output_samples": bucket_stats["output_samples"],
+    #     "input_turn_dist": dict(bucket_stats["input_turn_dist"]),
+    #     "output_turn_dist": dict(bucket_stats["output_turn_dist"]),
+    # }
 
     retention_rate = 0.0
     if bucket_stats["input_samples"] > 0:
@@ -265,7 +282,6 @@ def clean_bucket(bucket_dir, config_file, output_dir, trace_dir, stats):
     }
 
     return success_count
-
 
 def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
