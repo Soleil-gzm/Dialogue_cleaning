@@ -34,21 +34,21 @@ REPORT_DIR = "cleaning_reports"
 PLOT_TURNS = list(range(23))
 
 BUCKET_CONFIG_MAP = {
-    # "bucket_0": "config_bucket_turn0.yaml",
-    # "bucket_1": "config_bucket_turn1.yaml",
+    "bucket_0": "config_bucket_turn0.yaml",
+    "bucket_1": "config_bucket_turn1.yaml",
     "bucket_2": "config_bucket_turn2.yaml",
-    # "bucket_3": "overal_config.yaml",
-    # "bucket_4": "overal_config.yaml",
-    # "bucket_5": "overal_config.yaml",
-    # "bucket_6": "overal_config.yaml",
-    # "bucket_7": "overal_config.yaml",
-    # "bucket_8": "overal_config.yaml",
-    # "bucket_9": "overal_config.yaml",
-    # "bucket_10": "overal_config.yaml",
-    # "bucket_11": "overal_config.yaml",
-    # "bucket_12": "overal_config.yaml",
-    # "bucket_13_22": "config_bucket_13_22.yaml",
-    # "bucket_23plus": "config_bucket_23plus.yaml",
+    "bucket_3": "config_bucket_3.yaml",
+    "bucket_4": "config_bucket_4.yaml",
+    "bucket_5": "config_bucket_5.yaml",
+    "bucket_6": "overal_config.yaml",
+    "bucket_7": "overal_config.yaml",
+    "bucket_8": "overal_config.yaml",
+    "bucket_9": "overal_config.yaml",
+    "bucket_10": "overal_config.yaml",
+    "bucket_11": "overal_config.yaml",
+    "bucket_12": "overal_config.yaml",
+    "bucket_13_22": "config_bucket_13_22.yaml",
+    "bucket_23plus": "config_bucket_23plus.yaml",
 
 }
 

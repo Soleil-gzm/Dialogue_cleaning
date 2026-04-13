@@ -84,6 +84,9 @@ def process_dialog(dialog_id, messages, turn_counter):
 
             # target_output 以 "A：" 开头
             target_output = f"A：{assistant_raw}" if assistant_raw else "A："
+            
+            # 全部对话
+            full_text = history_text + f"{user_raw}\n{assistant_raw}"
 
             sample = {
                 "id": dialog_id,
@@ -91,8 +94,8 @@ def process_dialog(dialog_id, messages, turn_counter):
                 "user_input": full_input,
                 "target_output": target_output,
                 "loss": msg.get('loss', False),
-                # 可选：添加 "text" 字段用于清洗（仅当前轮对话，不带前缀）
-                # "text": f"{user_raw}\n{assistant_raw}"  # 可保留用于某些清洗算子
+                # 可选：添加 "text" 字段用于清洗（全部对话）
+                "text": full_text  
             }
             samples.append(sample)
             turn_counter[turn] += 1

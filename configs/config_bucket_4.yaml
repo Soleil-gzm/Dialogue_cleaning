@@ -10,8 +10,8 @@ trace_num: 1000
 process:
   - whitespace_normalization_mapper:
   - text_length_filter:
-      min_len: 250
-      max_len: 350
+      min_len: 100
+      max_len: 1000
   - language_id_score_filter:
       lang: zh
       min_score: 0.8
