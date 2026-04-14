@@ -17,6 +17,9 @@ EXCLUDE_WORDS = {
     '宽限期', '还款日', '账单', '逾期', '卡片', '客服', '电话', '手机'
 }
 
+# 临时占位符（确保不会与原文冲突）
+TEMP_PLACEHOLDER = '___NAME___'
+
 def anonymize_text(text):
     if not isinstance(text, str):
         return text
@@ -30,24 +33,42 @@ def anonymize_text(text):
     # 3. 邮箱
     text = re.sub(r'\b[\w\.-]+@[\w\.-]+\.\w+\b', r'{邮箱}', text)
 
-    # 4. 称谓姓名（X女士/X先生）整体替换为“小红”
-    text = re.sub(r'[\u4e00-\u9fa5]{1,2}(?:女士|先生)', r'[人名]', text)
+    # # 4. 称谓姓名（X女士/X先生）整体替换为“小红”
+    # text = re.sub(r'[\u4e00-\u9fa5]{1,2}(?:女士|先生)', r'[人名]', text)
 
-    # 5. jieba 识别人名，过滤排除词表后替换为“小红”
+     # 4. jieba 识别人名（排除词表），替换为临时占位符
     words = pseg.cut(text)
-    # 收集所有需要替换的人名（原词）
     names_to_replace = set()
     for word, flag in words:
         if flag == 'nr' and word not in EXCLUDE_WORDS:
-            # 避免替换已经处理过的“小红”占位符
-            if word != '[人名]':
-                names_to_replace.add(word)
-
-    # 按长度降序排序，避免短词替换破坏长词
+            names_to_replace.add(word)
     for name in sorted(names_to_replace, key=len, reverse=True):
-        text = text.replace(name, '[人名]')
+        text = text.replace(name, TEMP_PLACEHOLDER)
+
+    # 5. 称谓整体替换（避免拆分），也替换为临时占位符
+    # 匹配 "梁女士"、"李先生" 等
+    # text = re.sub(r'[\u4e00-\u9fa5]{1,2}(?:女士|先生)', TEMP_PLACEHOLDER, text)
+
+    # 6. 最后将所有的临时占位符统一替换为“小红”
+    text = text.replace(TEMP_PLACEHOLDER, '小红')
 
     return text
+
+    # # 5. jieba 识别人名，过滤排除词表后替换为“小红”
+    # words = pseg.cut(text)
+    # # 收集所有需要替换的人名（原词）
+    # names_to_replace = set()
+    # for word, flag in words:
+    #     if flag == 'nr' and word not in EXCLUDE_WORDS:
+    #         # 避免替换已经处理过的“小红”占位符
+    #         if word != '[人名]':
+    #             names_to_replace.add(word)
+
+    # # 按长度降序排序，避免短词替换破坏长词
+    # for name in sorted(names_to_replace, key=len, reverse=True):
+    #     text = text.replace(name, '[人名]')
+
+    # return text
 
 def process_files(input_dir, output_dir):
     input_path = Path(input_dir)
