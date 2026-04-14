@@ -14,7 +14,7 @@ cleaning_reports/
 trace_output/
 final_training_data/
 stats/
-
+samples_anonymized/
 
 # 其他临时文件
 *.log
