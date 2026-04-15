@@ -27,7 +27,8 @@ except ImportError:
 BUCKETED_ROOT = "bucketed"
 CLEANED_ROOT = "cleaned_jsonl"
 TRACE_ROOT = "trace_output"
-CONFIGS_DIR = "configs"
+# 修改配置文件
+CONFIGS_DIR = "configs_qa"
 REPORT_DIR = "cleaning_reports"
 # 配置：全局图要绘制的轮次，None 表示全部，否则为列表如 [0,1,2,3,4,5,6,7,8,9,10]
 # PLOT_TURNS = None   #全局

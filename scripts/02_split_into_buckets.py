@@ -16,6 +16,8 @@ from pathlib import Path
 from collections import defaultdict
 
 # 配置
+# INPUT_DIR = "samples"
+# INPUT_DIR = "samples_anonymized"
 INPUT_DIR = "samples"
 OUTPUT_BASE = "bucketed"
 
