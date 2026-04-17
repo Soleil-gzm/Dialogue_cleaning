@@ -25,6 +25,12 @@
 ├── final_training_data/ # 最终训练 JSON 文件  
 └── progress.txt # 断点续传记录
 
+## 资料信息
+
+    https://datajuicer.github.io/data-juicer/zh_CN/main/docs/operators/mapper/index.html
+    https://datajuicer.github.io/data-juicer/en/main/api/data_juicer.analysis.html
+
+
 ## 环境配置
 项目依赖 conda 环境：
 
